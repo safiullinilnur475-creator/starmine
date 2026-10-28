@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Звёздная шахта</title>
+<style>
+:root{--bg1:#1b1346;--bg2:#0b2a4f;--gold:#ffc94d;--pink:#ff5fa2;--ice:#8fe3ff;--card:rgba(255,255,255,.09);--text:#f4f1ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden}
+body{display:flex;flex-direction:column;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--text);background:radial-gradient(ellipse at 50% 0%,#33237a 0%,var(--bg1) 40%,var(--bg2) 100%);user-select:none;-webkit-user-select:none;touch-action:manipulation;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.stars{position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(1.5px 1.5px at 12% 20%,#fff9,transparent),radial-gradient(1px 1px at 70% 12%,#fff8,transparent),radial-gradient(1.5px 1.5px at 85% 45%,#fff7,transparent),radial-gradient(1px 1px at 30% 60%,#fff8,transparent),radial-gradient(1.5px 1.5px at 55% 35%,#fff6,transparent),radial-gradient(1px 1px at 8% 80%,#fff7,transparent)}
+header{text-align:center;padding:14px 12px 0;position:relative;z-index:6}
+.coins{font-size:clamp(34px,10vw,52px);font-weight:900;color:var(--gold);letter-spacing:.5px;text-shadow:0 2px 0 #9a6a00,0 0 24px #ffc94d66}
+.coins small{font-size:.45em;font-weight:700;margin-left:6px;color:#ffe9ad}
+.rate{font-size:15px;opacity:.8;margin-top:2px}
+.stage{flex:1;min-height:150px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative}
+#rock{width:min(54vw,38vh,260px);aspect-ratio:1;border-radius:46% 54% 50% 50%/52% 46% 54% 48%;border:0;padding:0;cursor:pointer;position:relative;background:radial-gradient(circle at 32% 28%,var(--r1,#d7c3a8) 0%,var(--r2,#9a8268) 42%,var(--r3,#33291f) 100%);box-shadow:inset -14px -18px 34px #0008,inset 10px 10px 24px #fff3,0 0 60px #8fe3ff44,0 20px 40px #0006;transition:transform .08s}
+#rock:active,#rock.hit{transform:scale(.93) rotate(-2deg)}
+#rock i{position:absolute;border-radius:50%;background:radial-gradient(circle at 40% 35%,#0006,#0003 60%,transparent 70%)}
+#rock i:nth-child(1){width:26%;height:26%;left:16%;top:20%}
+#rock i:nth-child(2){width:18%;height:18%;right:18%;top:36%}
+#rock i:nth-child(3){width:22%;height:22%;left:42%;bottom:14%}
+#rock b{position:absolute;width:12%;height:20%;background:linear-gradient(160deg,#d6f6ff,var(--ice) 45%,#3aa9d6);clip-path:polygon(50% 0,100% 40%,75% 100%,25% 100%,0 40%);filter:drop-shadow(0 0 8px var(--ice))}
+#rock b:nth-of-type(1){left:62%;top:14%;transform:rotate(18deg)}
+#rock b:nth-of-type(2){left:12%;top:58%;transform:rotate(-22deg) scale(.8)}
+.pop{position:absolute;font-weight:900;font-size:24px;color:var(--gold);text-shadow:0 2px 0 #7a5200;pointer-events:none;animation:up .8s ease-out forwards}
+@keyframes up{to{transform:translateY(-90px);opacity:0}}
+.boost{margin:0 12px 8px;padding:12px;border:0;border-radius:16px;font:800 16px inherit;font-family:inherit;color:#2a0a1c;background:linear-gradient(180deg,#ff8cbc,var(--pink));box-shadow:0 4px 0 #a02a68;cursor:pointer}
+.boost:active{transform:translateY(3px);box-shadow:0 1px 0 #a02a68}
+.boost.on{background:linear-gradient(180deg,#ffe68a,var(--gold));box-shadow:0 4px 0 #9a6a00;color:#3a2600}
+#shop{height:40vh;max-height:340px;overflow-y:auto;padding:0 12px 12px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch}
+.u{display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border:1px solid #ffffff22;border-radius:14px;background:var(--card);color:inherit;font-family:inherit;text-align:left;cursor:pointer}
+.u .ic{font-size:28px;width:40px;text-align:center}
+.u .tx{flex:1;min-width:0}
+.u .nm{font-weight:800;font-size:16px}
+.u .ds{font-size:13px;opacity:.75}
+.u .pr{font-weight:900;color:var(--gold);white-space:nowrap;font-size:15px}
+.u .ow{font-size:12px;opacity:.7;text-align:right}
+.u.off{opacity:.45}
+.u:not(.off):active{background:#ffffff22}
+.u.ast{border-color:#ff5fa2aa;background:linear-gradient(90deg,#ff5fa233,#ffffff11)}
+.meteor{position:absolute;left:-64px;width:56px;height:56px;border:0;border-radius:50%;padding:0;font-size:30px;cursor:pointer;z-index:5;background:radial-gradient(circle,#fff6c0,#ffc94d);box-shadow:0 0 26px #ffc94d;animation:fly 5s linear forwards}
+@keyframes fly{to{left:calc(100% + 8px)}}
+.tools{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px;z-index:7}
+.tools button{width:44px;height:44px;border-radius:14px;border:1px solid #ffffff33;background:var(--card);font-size:22px;color:inherit;cursor:pointer;position:relative;padding:0}
+.tools button.dot::after{content:'';position:absolute;top:4px;right:4px;width:12px;height:12px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink)}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal.show{display:flex}
+.mcard{width:100%;max-width:420px;max-height:80vh;overflow-y:auto;background:linear-gradient(180deg,#2a1d63,#14214a);border:1px solid #ffffff33;border-radius:20px;padding:18px}
+.mcard h2{margin:0 0 10px;font-size:22px;color:var(--gold)}
+.sub{opacity:.85;margin-bottom:10px;font-size:14px}
+.ar{display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid #ffffff18}
+.ar span{font-size:24px}.ar small{display:block;opacity:.7;font-size:13px}.ar.lock{opacity:.5}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:8px 0 12px}
+.day{background:var(--card);border-radius:10px;padding:8px 0;text-align:center;font-size:12px;border:1px solid transparent}
+.day b{display:block;font-size:17px}.day.now{border-color:var(--gold);box-shadow:0 0 10px #ffc94d66}.day.done{background:#ffc94d33}
+.mbtn{display:block;width:100%;margin-top:8px;padding:12px;border:0;border-radius:14px;font-weight:800;font-size:16px;font-family:inherit;cursor:pointer;color:#3a2600;background:linear-gradient(180deg,#ffe68a,var(--gold))}
+.mbtn.pink{color:#2a0a1c;background:linear-gradient(180deg,#ff8cbc,var(--pink))}
+.mx{display:block;margin:12px auto 0;background:none;border:0;color:#fff;opacity:.8;font-size:15px;font-family:inherit;cursor:pointer}
+.mrow{display:flex;align-items:center;gap:12px;width:100%;padding:12px;margin-bottom:8px;border:1px solid #ffffff22;border-radius:14px;background:var(--card);color:inherit;font-family:inherit;font-size:16px;cursor:pointer;text-align:left;position:relative}
+.mrow span{font-size:24px;width:32px;text-align:center}
+.mrow .pd{position:absolute;right:14px;width:12px;height:12px;border-radius:50%;background:var(--pink);box-shadow:0 0 8px var(--pink)}
+.lb{display:flex;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid #ffffff18}
+.lb.me{background:#ffc94d22;border-radius:10px}
+.lb .rk{width:30px;text-align:center;font-weight:800;color:var(--gold)}
+.lb img,.lb .av{width:32px;height:32px;border-radius:50%;background:#ffffff22;flex:none}
+.lb .nm2{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .sc{margin-left:auto;font-weight:800;text-align:right;white-space:nowrap}
+.lb small{display:block;opacity:.65;font-weight:400;font-size:12px}
+.toast{z-index:30;position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#000b;padding:10px 16px;border-radius:12px;font-size:15px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:86vw;text-align:center}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){#rock,.pop{transition:none;animation:none}}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<header>
+  <div class="coins"><span id="coins">0</span><small>монет</small></div>
+  <div class="rate" id="rate"></div>
+  <div class="rate" id="astname"></div>
+  <div class="tools"><button id="bMenu" aria-label="Меню">☰</button></div>
+</header>
+<div class="stage" id="stage">
+  <button id="rock" aria-label="Добывать монеты"><i></i><i></i><i></i><b></b><b></b></button>
+</div>
+<button class="boost" id="boost">Смотреть рекламу: доход ×2 на 60 секунд</button>
+<div id="shop"></div>
+<div class="modal" id="modal"><div class="mcard"><h2 id="mt"></h2><div id="mb"></div><button class="mx" id="mx">Закрыть</button></div></div>
+<div class="toast" id="toast"></div>
+<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+<script>
+(function(){
+var UPG=[
+ {n:'Кирка',d:'+1 за клик',base:15,t:'c',v:1,e:'⛏️'},
+ {n:'Лазерный бур',d:'+5 за клик',base:150,t:'c',v:5,e:'🔦'},
+ {n:'Дрон-шахтёр',d:'+1 в секунду',base:50,t:'s',v:1,e:'🛸'},
+ {n:'Буровая вышка',d:'+8 в секунду',base:500,t:'s',v:8,e:'🏗️'},
+ {n:'Станция на орбите',d:'+50 в секунду',base:4000,t:'s',v:50,e:'🛰️'},
+ {n:'Квантовый бур',d:'+400 в секунду',base:35000,t:'s',v:400,e:'🌀'},
+ {n:'Плазменный резак',d:'+30 за клик',base:2500,t:'c',v:30,e:'⚡'},
+ {n:'Звёздный комбайн',d:'+3000 в секунду',base:300000,t:'s',v:3000,e:'🚀'},
+ {n:'Чёрная дыра',d:'+25000 в секунду',base:3000000,t:'s',v:25000,e:'🕳️'},
+ {n:'Звёздный молот',d:'+400 за клик',base:60000,t:'c',v:400,e:'🔨'},
+ {n:'Нейтронный бур',d:'+250 000 в секунду',base:50000000,t:'s',v:250000,e:'⚛️'},
+ {n:'Галактический флот',d:'+3 млн в секунду',base:800000000,t:'s',v:3000000,e:'🛰️'}
+];
+var AST=[
+ {n:'Каменный',m:1,cost:0,c:['#d7c3a8','#9a8268','#33291f']},
+ {n:'Ледяной',m:2,cost:20000,c:['#e8fcff','#7fc4e0','#1d4a6b']},
+ {n:'Железный',m:5,cost:400000,c:['#d9dde6','#7d8696','#262b36']},
+ {n:'Золотой',m:15,cost:8000000,c:['#fff3b0','#e0a82e','#6b4308']},
+ {n:'Кристальный',m:50,cost:200000000,c:['#ffd9f2','#c46bd6','#3a1560']},
+ {n:'Лавовый',m:150,cost:5000000000,c:['#ffd9a0','#e8541f','#4a0f05']},
+ {n:'Плазменный',m:600,cost:200000000000,c:['#e0f4ff','#4a7cff','#0b1450']},
+ {n:'Тёмная материя',m:3000,cost:10000000000000,c:['#d9c6ff','#5b2a9c','#07020f']}
+];
+var KEY='starmine_v1';
+var S={v:1,coins:0,ast:0,u:UPG.map(function(){return 0}),boostUntil:0,saved:0,ach:[],clicks:0,total:0,stars:0,daily:{d:'',s:0},snd:true,run:0,dust:0,pres:0};
+var lastAst=-1;
+var adOpen=false,vkOn=false,cloudReady=false,hadLocal=false,lastCloud=0,lastAd=Date.now();
+var $=function(id){return document.getElementById(id)};
+
+// Приводит сохранение к текущему формату: новые улучшения добавляются с нулём, прогресс не теряется
+function norm(p){
+  if(!p||!p.u||typeof p.u.length!=='number')return null;
+  var u=[];for(var i=0;i<UPG.length;i++)u.push(Math.max(0,Math.floor(+p.u[i])||0));
+  return {v:1,coins:Math.max(0,+p.coins||0),ast:Math.min(AST.length-1,Math.max(0,Math.floor(+p.ast)||0)),u:u,boostUntil:+p.boostUntil||0,saved:+p.saved||0,ach:Array.isArray(p.ach)?p.ach.filter(function(x){return typeof x==='string'}):[],clicks:Math.max(0,+p.clicks||0),total:Math.max(0,+p.total||0),stars:Math.max(0,+p.stars||0),daily:{d:String(p.daily&&p.daily.d||''),s:Math.max(0,Math.floor(+(p.daily&&p.daily.s))||0)},snd:p.snd!==false,run:Math.max(0,+p.run||0),dust:Math.max(0,Math.floor(+p.dust)||0),pres:Math.max(0,Math.floor(+p.pres)||0)};
+}
+try{var raw=localStorage.getItem(KEY);if(raw){var n0=norm(JSON.parse(raw));if(n0){S=n0;hadLocal=true}}}catch(e){}
+
+function cloudSave(force){
+  if(!vkOn||!cloudReady)return;
+  var now=Date.now();if(!force&&now-lastCloud<15000)return;
+  lastCloud=now;
+  try{var sv=JSON.stringify(S);if(sv.length<4000)vkBridge.send('VKWebAppStorageSet',{key:'save',value:sv}).catch(function(){})}catch(e){}
+}
+function save(){S.saved=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}cloudSave(false)}
+function fmt(n){
+  if(n<1000)return String(Math.floor(n));
+  var s=['',' тыс',' млн',' млрд',' трлн',' квдр',' квнт'],i=0;
+  while(n>=1000&&i<s.length-1){n/=1000;i++}
+  return (n<10?n.toFixed(2):n<100?n.toFixed(1):Math.floor(n))+s[i];
+}
+function cost(i){return Math.ceil(UPG[i].base*Math.pow(1.15,S.u[i]))}
+function astm(){return AST[S.ast].m}
+function mult(){return (Date.now()<S.boostUntil?2:1)*astm()*(1+0.03*S.ach.length)*(1+0.1*S.dust)}
+function perClick(){var v=1;UPG.forEach(function(u,i){if(u.t==='c')v+=u.v*S.u[i]});return v}
+function perSec(){var v=0;UPG.forEach(function(u,i){if(u.t==='s')v+=u.v*S.u[i]});return v}
+
+function toast(t){var el=$('toast');el.textContent=t;el.className='toast show';clearTimeout(toast.h);toast.h=setTimeout(function(){el.className='toast'},2600)}
+
+// shop
+var shop=$('shop');
+var ab0=document.createElement('button');ab0.className='u ast';ab0.id='ast';
+ab0.innerHTML='<span class="ic">☄️</span><span class="tx"><div class="nm"></div><div class="ds"></div></span><span><div class="pr"></div></span>';
+shop.appendChild(ab0);
+function buyAst(){
+  if(S.ast>=AST.length-1)return;
+  var a=AST[S.ast+1];
+  if(S.coins<a.cost){toast('Не хватает монет');return}
+  S.coins-=a.cost;S.ast++;snd('buy2');toast('Новый астероид: '+a.n+' ×'+a.m);render();save();
+}
+UPG.map(function(u,i){return i}).sort(function(a,b){return UPG[a].base-UPG[b].base}).forEach(function(i){
+  var u=UPG[i];var b=document.createElement('button');b.className='u';b.dataset.i=i;
+  b.innerHTML='<span class="ic">'+u.e+'</span><span class="tx"><div class="nm">'+u.n+'</div><div class="ds">'+u.d+'</div></span><span><div class="pr"></div><div class="ow"></div></span>';
+  shop.appendChild(b);
+});
+shop.addEventListener('click',function(e){
+  var b=e.target.closest('.u');if(!b)return;
+  if(b.id==='ast'){buyAst();return}
+  var i=+b.dataset.i,c=cost(i);
+  if(S.coins<c){snd('no');toast('Не хватает монет');return}
+  S.coins-=c;S.u[i]++;snd('buy');render();save();
+  if(vkOn&&Date.now()-lastAd>180000){
+    lastAd=Date.now();adOpen=true;
+    try{vkBridge.send('VKWebAppShowNativeAds',{ad_format:'interstitial'}).then(function(){adOpen=false;lastAd=Date.now()}).catch(function(){adOpen=false})}catch(err){adOpen=false}
+  }
+});
+
+// click
+var rock=$('rock'),stage=$('stage');
+rock.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  var g=perClick()*mult();S.coins+=g;S.total+=g;S.run+=g;S.clicks++;snd('tap');
+  var r=stage.getBoundingClientRect();
+  var el=document.createElement('div');el.className='pop';el.textContent='+'+fmt(g);
+  el.style.left=(e.clientX-r.left-14)+'px';el.style.top=(e.clientY-r.top-20)+'px';
+  stage.appendChild(el);setTimeout(function(){el.remove()},800);
+  render();
+});
+
+// boost
+function boost(){S.boostUntil=Math.max(Date.now(),S.boostUntil)+60000;snd('star');toast('Доход ×2 включён');render();save()}
+function showReward(cb){
+  if(!vkOn){cb();toast('Тест без VK: награда выдана без рекламы');return}
+  adOpen=true;
+  try{
+    vkBridge.send('VKWebAppShowNativeAds',{ad_format:'reward'}).then(function(d){
+      adOpen=false;lastAd=Date.now();
+      if(d&&d.result)cb();else toast('Реклама сейчас недоступна, попробуй позже');
+    }).catch(function(){adOpen=false;toast('Реклама сейчас недоступна, попробуй позже')});
+  }catch(err){adOpen=false;toast('Реклама сейчас недоступна, попробуй позже')}
+}
+$('boost').addEventListener('click',function(){showReward(boost)});
+
+function render(){
+  $('coins').textContent=fmt(S.coins);
+  $('bMenu').classList.toggle('dot',dailyInfo().can||dustGain()>=1);
+  var m=mult(),ps=perSec()*m;
+  $('rate').textContent=ps>0?'+'+fmt(ps)+' в секунду':'Нажимай на астероид';
+  var left=S.boostUntil-Date.now(),bb=$('boost');
+  if(left>0){bb.className='boost on';bb.textContent='Доход ×2: ещё '+Math.ceil(left/1000)+' с (нажми, чтобы продлить)'}
+  else{bb.className='boost';bb.textContent='Смотреть рекламу: доход ×2 на 60 секунд'}
+  if(lastAst!==S.ast){var cc=AST[S.ast].c;rock.style.setProperty('--r1',cc[0]);rock.style.setProperty('--r2',cc[1]);rock.style.setProperty('--r3',cc[2]);lastAst=S.ast}
+  $('astname').textContent=AST[S.ast].n+' астероид'+(astm()>1?' ×'+astm():'')+(S.dust?', звёздная пыль: '+S.dust:'');
+  var ab=$('ast');
+  if(S.ast>=AST.length-1){ab.querySelector('.nm').textContent='Все астероиды открыты';ab.querySelector('.ds').textContent='Ты добываешь на лучшем астероиде';ab.querySelector('.pr').textContent='';ab.classList.add('off')}
+  else{var a=AST[S.ast+1];ab.querySelector('.nm').textContent=a.n+' астероид';ab.querySelector('.ds').textContent='весь доход ×'+a.m+' навсегда';ab.querySelector('.pr').textContent=fmt(a.cost);ab.classList.toggle('off',S.coins<a.cost)}
+  var items=shop.querySelectorAll('.u[data-i]');
+  for(var k=0;k<items.length;k++){
+    var i=+items[k].dataset.i,c=cost(i);
+    items[k].classList.toggle('off',S.coins<c);
+    items[k].querySelector('.pr').textContent=fmt(c);
+    items[k].querySelector('.ow').textContent=S.u[i]?'куплено: '+S.u[i]:'';
+  }
+}
+
+// ---------- sound (synthesized, no files) ----------
+var AC=null;
+function tone(n){
+  var t=AC.currentTime+(n[5]||0),o=AC.createOscillator(),g=AC.createGain();
+  o.type=n[2];o.frequency.setValueAtTime(n[0],t);
+  if(n[4])o.frequency.linearRampToValueAtTime(Math.max(40,n[0]+n[4]),t+n[1]);
+  g.gain.setValueAtTime(n[3],t);g.gain.exponentialRampToValueAtTime(0.001,t+n[1]);
+  o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+n[1]+0.02);
+}
+function snd(kind){
+  if(!S.snd||adOpen||document.hidden)return;
+  try{
+    if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return;AC=new C()}
+    if(AC.state==='suspended')AC.resume();
+    var P={
+      tap:[[520+Math.random()*180,.07,'triangle',.18,-180]],
+      buy:[[440,.09,'square',.07,0],[660,.12,'square',.07,0,.08]],
+      buy2:[[330,.1,'sawtooth',.07,0],[495,.1,'sawtooth',.07,0,.1],[660,.1,'sawtooth',.07,0,.2],[990,.25,'sawtooth',.07,0,.3]],
+      no:[[170,.14,'square',.06,-40]],
+      star:[[880,.1,'sine',.15,0],[1320,.15,'sine',.15,0,.09],[1760,.25,'sine',.15,0,.18]],
+      ach:[[523,.12,'triangle',.2,0],[659,.12,'triangle',.2,0,.12],[784,.12,'triangle',.2,0,.24],[1047,.3,'triangle',.2,0,.36]]
+    }[kind]||[];
+    P.forEach(tone);
+  }catch(e){}
+}
+
+// ---------- achievements (+3% income each) ----------
+function sum(a){return a.reduce(function(x,y){return x+y},0)}
+var ACH=[
+ {id:'c1',n:'Первый удар',d:'Сделай первый клик',f:function(){return S.clicks>=1}},
+ {id:'c2',n:'Разогрев',d:'Сделай 100 кликов',f:function(){return S.clicks>=100}},
+ {id:'c3',n:'Золотые руки',d:'Сделай 1000 кликов',f:function(){return S.clicks>=1000}},
+ {id:'c4',n:'Мозоли на пальцах',d:'Сделай 10 000 кликов',f:function(){return S.clicks>=10000}},
+ {id:'t1',n:'Первая тысяча',d:'Добудь 1000 монет',f:function(){return S.total>=1e3}},
+ {id:'t2',n:'Миллионер',d:'Добудь 1 млн монет',f:function(){return S.total>=1e6}},
+ {id:'t3',n:'Магнат',d:'Добудь 1 млрд монет',f:function(){return S.total>=1e9}},
+ {id:'t4',n:'Хозяин галактики',d:'Добудь 1 трлн монет',f:function(){return S.total>=1e12}},
+ {id:'a1',n:'Новые горизонты',d:'Открой ледяной астероид',f:function(){return S.ast>=1}},
+ {id:'a2',n:'Золотая лихорадка',d:'Открой золотой астероид',f:function(){return S.ast>=3}},
+ {id:'a3',n:'Мастер кристаллов',d:'Открой кристальный астероид',f:function(){return S.ast>=4}},
+ {id:'u1',n:'Первые покупки',d:'Купи 10 улучшений',f:function(){return sum(S.u)>=10}},
+ {id:'u2',n:'Целая флотилия',d:'Купи 50 улучшений',f:function(){return sum(S.u)>=50}},
+ {id:'u3',n:'Полный арсенал',d:'Купи каждый вид инструмента',f:function(){return S.u.every(function(x){return x>0})}},
+ {id:'s1',n:'Звёздный ловец',d:'Поймай золотую звезду',f:function(){return S.stars>=1}},
+ {id:'s2',n:'Охотник за звёздами',d:'Поймай 10 золотых звёзд',f:function(){return S.stars>=10}},
+ {id:'d1',n:'Постоянный игрок',d:'Забери ежедневную награду 3 дня подряд',f:function(){return S.daily.s>=3}},
+ {id:'a4',n:'Повелитель тьмы',d:'Открой астероид из тёмной материи',f:function(){return S.ast>=7}},
+ {id:'p1',n:'Новое начало',d:'Соверши первое перерождение',f:function(){return S.pres>=1}},
+ {id:'p2',n:'Ветеран галактики',d:'Соверши 5 перерождений',f:function(){return S.pres>=5}}
+];
+function checkAch(){
+  for(var i=0;i<ACH.length;i++){
+    var a=ACH[i];
+    if(S.ach.indexOf(a.id)<0&&a.f()){S.ach.push(a.id);toast('🏆 '+a.n+': +3% к доходу');snd('ach');save()}
+  }
+}
+
+// ---------- modal ----------
+function modal(title,html){$('mt').textContent=title;$('mb').onclick=null;$('mb').innerHTML=html;$('modal').className='modal show'}
+function closeModal(){$('modal').className='modal'}
+$('mx').addEventListener('click',closeModal);
+$('modal').addEventListener('click',function(e){if(e.target===$('modal'))closeModal()});
+function openAch(){
+  var h='<div class="sub">Открыто: '+S.ach.length+' из '+ACH.length+'. Бонус к доходу: +'+(S.ach.length*3)+'%</div>';
+  ACH.forEach(function(a){var ok=S.ach.indexOf(a.id)>=0;h+='<div class="ar'+(ok?'':' lock')+'"><span>'+(ok?'🏆':'🔒')+'</span><div><b>'+a.n+'</b><small>'+a.d+'</small></div></div>'});
+  modal('Достижения',h);
+}
+function toggleSnd(){S.snd=!S.snd;save();render();snd('tap')}
+
+// ---------- daily reward (7-day streak) ----------
+function dkey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()}
+function dailyInfo(){
+  var t=dkey(new Date()),y=dkey(new Date(Date.now()-864e5));
+  if(S.daily.d===t)return {can:false,streak:S.daily.s};
+  return {can:true,streak:S.daily.d===y?S.daily.s+1:1};
+}
+function dailyReward(st){return Math.floor(Math.max(250,perSec()*astm()*120)*(((st-1)%7)+1))}
+function claim(x2){
+  var i=dailyInfo();if(!i.can)return;
+  var g=dailyReward(i.streak)*(x2?2:1);
+  S.coins+=g;S.total+=g;S.run+=g;S.daily={d:dkey(new Date()),s:i.streak};
+  snd('star');toast('Награда: +'+fmt(g)+' монет');save();render();closeModal();
+}
+function openDaily(){
+  var i=dailyInfo(),cur=((i.streak-1)%7)+1,h='<div class="days">';
+  for(var d=1;d<=7;d++)h+='<div class="day'+(d===cur&&i.can?' now':'')+((d<cur||(d===cur&&!i.can))?' done':'')+'"><b>'+d+'</b>×'+d+'</div>';
+  h+='</div>';
+  if(i.can){
+    h+='<div class="sub">Серия: '+i.streak+' дн. Сегодня: +'+fmt(dailyReward(i.streak))+' монет. Чем длиннее серия, тем больше награда.</div><button class="mbtn" id="dc1">Забрать</button><button class="mbtn pink" id="dc2">Забрать ×2 за рекламу</button>';
+  }else{
+    h+='<div class="sub">Награда на сегодня получена. Серия: '+i.streak+' дн. Возвращайся завтра, чтобы не потерять серию.</div>';
+  }
+  modal('Ежедневная награда',h);
+  if(i.can){
+    $('dc1').addEventListener('click',function(){claim(false)});
+    $('dc2').addEventListener('click',function(){showReward(function(){claim(true)})});
+  }
+}
+
+// ---------- prestige: reset a run for permanent bonus ----------
+function dustGain(){return Math.floor(Math.sqrt(S.run/5e6))}
+function doPrestige(){
+  var n=dustGain();if(n<1)return;
+  S.dust+=n;S.pres++;S.coins=0;S.u=UPG.map(function(){return 0});S.ast=0;S.boostUntil=0;S.run=0;lastAst=-1;
+  snd('buy2');toast('Перерождение! +'+n+' звёздной пыли');save();render();closeModal();lbSubmit();
+}
+function openPrestige(){
+  var n=dustGain(),h='<div class="sub">Начни заново и получи звёздную пыль. Каждая пылинка навсегда даёт +10% к доходу. Достижения, пыль и награды сохраняются, а монеты, улучшения и астероиды сбрасываются.</div>'
+   +'<div class="ar"><span>✨</span><div><b>Пыль сейчас: '+S.dust+'</b><small>Бонус к доходу: +'+(S.dust*10)+'%</small></div></div>'
+   +'<div class="ar"><span>🌠</span><div><b>Можно получить: +'+n+'</b><small>Добыто за этот забег: '+fmt(S.run)+' монет</small></div></div>';
+  if(n>=1)h+='<button class="mbtn pink" id="pgo">Перерождение: +'+n+' ✨</button>';
+  else h+='<div class="sub" style="margin-top:10px">Добудь за забег хотя бы '+fmt(5e6)+' монет, и получишь первую пылинку.</div>';
+  modal('Перерождение',h);
+  if(n>=1){var armed=false;$('pgo').addEventListener('click',function(){
+    if(!armed){armed=true;this.textContent='Точно? Прогресс забега сбросится. Нажми ещё раз';return}
+    doPrestige();
+  })}
+}
+
+// ---------- menu ----------
+function openHelp(){
+  modal('Как играть','<div class="sub">Нажимай на астероид, чтобы добывать монеты. Покупай улучшения и дронов: они копают сами. Новые астероиды увеличивают весь доход. Золотая звезда пролетает раз в полминуты: успей тапнуть. Когда добудешь за забег 5 млн монет, сделай перерождение и получи звёздную пыль: +10% к доходу навсегда.</div>');
+}
+function openMenu(){
+  var rows=[['🏆','Достижения','ach',0],['🎁','Ежедневная награда','gift',dailyInfo().can],['🌠','Перерождение','pres',dustGain()>=1],['📊','Рейтинг перерождений','top',0],['❓','Как играть','help',0],[S.snd?'🔊':'🔇',S.snd?'Звук: включён':'Звук: выключен','snd',0]],h='';
+  rows.forEach(function(r){h+='<button class="mrow" data-a="'+r[2]+'"><span>'+r[0]+'</span><b>'+r[1]+'</b>'+(r[3]?'<i class="pd"></i>':'')+'</button>'});
+  modal('Меню',h);
+  $('mb').onclick=function(e){
+    var b=e.target.closest('.mrow');if(!b)return;
+    var a=b.dataset.a;
+    if(a==='ach')openAch();else if(a==='gift')openDaily();else if(a==='pres')openPrestige();
+    else if(a==='top')openTop();else if(a==='help')openHelp();else if(a==='snd'){toggleSnd();openMenu()}
+  };
+}
+$('bMenu').addEventListener('click',openMenu);
+
+// ---------- leaderboard: number of prestiges (VK leaderboard, needs a leaderboard enabled in the app settings) ----------
+function lbSubmit(){return Promise.resolve()}
+function openTop(){
+  if(!vkOn){modal('Рейтинг перерождений','<div class="sub">Рейтинг работает только внутри ВКонтакте.</div>');return}
+  vkBridge.send('VKWebAppShowLeaderBoardBox',{user_result:S.pres}).catch(function(){toast('Рейтинг сейчас недоступен')});
+}
+
+// golden star: tap it while it flies by
+function meteor(){
+  var m=document.createElement('button');m.className='meteor';m.textContent='⭐';m.setAttribute('aria-label','Золотая звезда');
+  m.style.top=(12+Math.random()*55)+'%';
+  stage.appendChild(m);
+  m.addEventListener('pointerdown',function(e){
+    e.preventDefault();e.stopPropagation();
+    var g=Math.max(perClick()*mult()*77,perSec()*mult()*45);
+    S.coins+=g;S.total+=g;S.run+=g;S.stars++;snd('star');toast('Золотая звезда: +'+fmt(g)+' монет');m.remove();render();
+  });
+  setTimeout(function(){m.remove()},5300);
+}
+(function sched(){setTimeout(function(){if(!document.hidden)meteor();sched()},22000+Math.random()*30000)})();
+
+// passive income
+setInterval(function(){var ps=perSec();if(ps>0){var gg=ps*mult()/10;S.coins+=gg;S.total+=gg;S.run+=gg}checkAch();render()},100);
+setInterval(save,5000);
+document.addEventListener('visibilitychange',function(){if(document.hidden){save();cloudSave(true);try{if(AC&&AC.state==='running')AC.suspend()}catch(e){}}});
+
+// offline income (half speed, up to 2 hours)
+(function(){
+  var away=Math.min((Date.now()-(S.saved||Date.now()))/1000,7200),ps=perSec();
+  if(away>30&&ps>0){var g=Math.floor(away*ps*0.5*astm());S.coins+=g;S.total+=g;S.run+=g;toast('Пока тебя не было: +'+fmt(g)+' монет')}
+})();
+
+render();
+
+// VK Bridge
+if(window.vkBridge&&vkBridge.isEmbedded&&vkBridge.isEmbedded()){
+  vkBridge.send('VKWebAppInit').then(function(){
+    vkOn=true;
+    return vkBridge.send('VKWebAppStorageGet',{keys:['save']});
+  }).then(function(d){
+    var v=d&&d.keys&&d.keys[0]&&d.keys[0].value;
+    var c=v?norm(JSON.parse(v)):null;
+    if(c&&(!hadLocal||c.saved>S.saved)){
+      S=c;try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}
+      render();toast('Прогресс загружен из облака');
+    }
+    cloudReady=true;cloudSave(true);
+  }).catch(function(){cloudReady=false});
+}
+})();
+</script>
+</body>
+</html>
